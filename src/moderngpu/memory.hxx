@@ -128,4 +128,24 @@ mem_t<int> inline fill_random(int a, int b, size_t count, bool sorted,
   return to_mem(data, context);
 }
 
+
+inline std::mt19937_64& get_mt19937_64() {
+  static std::mt19937_64 mt19937_64;
+  return mt19937_64;
+}
+
+mem_t<int64_t> inline fill_random_64(int64_t a, int64_t b, size_t count, bool sorted, 
+  context_t& context) {
+
+  std::uniform_int_distribution<int64_t> d(a, b);
+  std::vector<int64_t> data(count);
+
+  for(int64_t& i : data)
+    i = d(get_mt19937_64());
+  if(sorted) 
+    std::sort(data.begin(), data.end());
+
+  return to_mem(data, context);
+}
+
 END_MGPU_NAMESPACE
