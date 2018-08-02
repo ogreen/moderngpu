@@ -148,4 +148,18 @@ mem_t<int64_t> inline fill_random_64(int64_t a, int64_t b, size_t count, bool so
   return to_mem(data, context);
 }
 
+
+template<typename type_t>
+mem_t<type_t> fill_sequence(type_t ignore, size_t count, context_t& context) {
+  // We'd prefer to call fill_function and pass a lambda that returns value,
+  // but that can create tokens that are too long for VS2013.
+  mem_t<type_t> mem(count, context);
+  type_t* p = mem.data();
+  transform([=]MGPU_DEVICE(int index) {
+    p[index] = (type_t)index;
+  }, count, context);
+  return mem;
+}
+
+
 END_MGPU_NAMESPACE
