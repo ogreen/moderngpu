@@ -17,7 +17,8 @@ struct segsort_t {
     launch_box_t<
       arch_20_cta<128, 15>,
       arch_35_cta<128, 11>,
-      arch_52_cta<128, 15>
+      // arch_52_cta<128, 15>
+      arch_52_cta<32, 15>
     >
   >::type_t launch_t;
 
