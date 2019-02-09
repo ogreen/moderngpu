@@ -18,6 +18,7 @@ enum memory_space_t {
 inline std::string device_prop_string(cudaDeviceProp prop) {
   int ordinal;
   cudaGetDevice(&ordinal);
+  printf("Device ID : %d\n",ordinal);
 
   size_t freeMem, totalMem;
   cudaError_t result = cudaMemGetInfo(&freeMem, &totalMem);
@@ -160,6 +161,37 @@ public:
     return ms / 1.0e3;
   }
 };
+
+////////////////////////////////////////////////////////////////////////////////
+// standard_context_t is a trivial implementation of context_t. Users can
+// derive this type to provide a custom allocator.
+
+class managed_context_t : public standard_context_t {
+protected:
+  // cudaDeviceProp _props;
+  // int _ptx_version;
+
+public:
+  managed_context_t(bool print_prop = true, cudaStream_t stream_ = 0) :
+    mgpu::standard_context_t(print_prop, stream_) {}
+  ~managed_context_t() {}
+
+
+  // Alloc GPU memory.
+  virtual void* alloc(size_t size, memory_space_t space) {
+    void* p = nullptr;
+    if(size) {
+      cudaError_t result = (memory_space_device == space) ? 
+        // cudaMalloc(&p, size) :
+        cudaMallocManaged(&p, size, cudaMemAttachGlobal ) :
+        cudaMallocHost(&p, size);
+      if(cudaSuccess != result) throw cuda_exception_t(result);
+    }
+    return p;    
+  }
+
+};
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // mem_t
