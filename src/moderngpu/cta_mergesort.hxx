@@ -77,7 +77,8 @@ struct cta_sort_t {
     num_passes = s_log2(nt)
   };
 
-  union storage_t {
+  // union storage_t {
+  struct storage_t {
     key_t keys[nt * vt + 1];
     val_t vals[nt * vt];
   };

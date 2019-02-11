@@ -35,7 +35,7 @@ void mergesort(key_t* keys_input, val_t* vals_input, int count,
     launch_box_t<
       arch_20_cta<128, 17>,
       arch_35_cta<128, 11>,
-      arch_52_cta<128, 15>
+      arch_52_cta<64, 15>
     >
   >::type_t launch_t;
 
@@ -57,11 +57,19 @@ void mergesort(key_t* keys_input, val_t* vals_input, int count,
     enum { nt = params_t::nt, vt = params_t::vt, nv = nt * vt };
     typedef cta_sort_t<nt, vt, key_t, val_t> sort_t;
 
-    __shared__ union {
-      typename sort_t::storage_t sort;
+    // __shared__ union {
+    // __shared__ struct {
+    //   typename sort_t::storage_t sort;
+    //   key_t keys[nv];
+    //   val_t vals[nv];
+    // } shared;
+    __shared__ typename sort_t::storage_t st_sort;
+
+    __shared__ struct {
       key_t keys[nv];
       val_t vals[nv];
     } shared;
+
 
     range_t tile = get_tile(cta, nv, count);
 
@@ -75,7 +83,8 @@ void mergesort(key_t* keys_input, val_t* vals_input, int count,
 
     // Blocksort.
     kv_array_t<key_t, val_t, vt> sorted = sort_t().block_sort(unsorted,
-      tid, tile.count(), comp, shared.sort);
+      // tid, tile.count(), comp, shared.sort);
+      tid, tile.count(), comp, st_sort);
 
     // Store the keys and values.
     reg_to_mem_thread<nt, vt>(sorted.keys, tid, tile.count(), 
@@ -102,7 +111,8 @@ void mergesort(key_t* keys_input, val_t* vals_input, int count,
       typedef typename launch_t::sm_ptx params_t;
       enum { nt = params_t::nt, vt = params_t::vt, nv = nt * vt };
 
-      __shared__ union {
+      // __shared__ union {
+      __shared__ struct {
         key_t keys[nv + 1];
         int indices[nv];
       } shared;
